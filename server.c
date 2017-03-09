@@ -9,19 +9,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <fcntl.h>
-#define BUFFER 2048
-
-struct {
-    char* ext;
-    char* type;
-} types [] = {
-    {".jpg", "image/jpg"},
-    {".jpeg", "image/jpeg"},
-    {".gif", "image/gif"},
-    {".html", "text/html"},
-    {0, 0} 
-};
-
+#define BUFFER 1000
 void error (char* msg) {
     perror(msg);
     exit(1);
@@ -30,7 +18,7 @@ void error (char* msg) {
 int main (int argc, char* argv[]) {
     int sockfd, newsockfd;
     int port;
-    int n, ext, i, len, flag404;
+    int n, ext, i, len;
     socklen_t client_len;
     char buffer[BUFFER+1];
     char* type;
@@ -57,8 +45,6 @@ int main (int argc, char* argv[]) {
 
     // this loop perpetually accepts the connection and processes a new HTTP request
     while (1) {
-        
-        flag404 = 0;
 
         newsockfd = accept(sockfd, (struct sockaddr*) &client_addr, &client_len);
         if (newsockfd < 0) error("Could not accept\n");
@@ -75,35 +61,6 @@ int main (int argc, char* argv[]) {
 
         printf("Received request: \n%s", buffer);
 
-        // validate GET request
-        if (strncasecmp("GET ", buffer, 4)) {
-            printf("Invalid GET request\n");
-            continue;
-        }
-
-        // delineate URL
-        for (i = 4; i < BUFFER; i++) {
-            if (buffer[i] == ' ') {
-                buffer[i] = 0;
-                break;
-            }
-        }
-        
-        printf("Finding %s...\n", &buffer[5]);
-
-        // find the last period in URL
-        for (i = 0; i < strlen(buffer); i++) if (buffer[i] == '.') ext = i;
-
-        // figure out file type
-        for (i = 0; i < 3; i++) {
-            if (!strncmp(&buffer[ext] , types[i].ext, strlen(&buffer[ext]))) {
-                type = types[i].type;
-                break;
-            }
-        }
-
-        printf("Extension is %s, type is %s\n", &buffer[ext], type);
-
         // open file for reading
         if (access(&buffer[5], F_OK) == -1) {
             flag404 = 1;
@@ -119,13 +76,6 @@ int main (int argc, char* argv[]) {
         printf("Sending file of length %d\n", len);
 
         bzero(buffer, BUFFER);
-        
-        // put response in buffer and send it
-        if (flag404) {
-            snprintf(&buffer[0], BUFFER, "HTTP/1.1 404 Not Found\r\nServer: sayeed's server\r\nContent-Length: %d\r\nConnection: close\r\nContent-Type: %s\r\n\r\n", len, type);
-        } else {
-            snprintf(&buffer[0], BUFFER, "HTTP/1.1 200 OK\r\nServer: sayeed's server\r\nContent-Length: %d\r\nConnection: close\r\nContent-Type: %s\r\n\r\n", len, type);
-        }
 
         write(newsockfd, buffer, strlen(buffer));
         printf("Responded: %s\n", buffer);
