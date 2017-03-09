@@ -1,5 +1,5 @@
 // Sayeed Siddiqui - CSE 3461 Lab 1
-// Usage: ./server port
+// Usage: ./sender port
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,14 +18,14 @@ void error (char* msg) {
 int main (int argc, char* argv[]) {
     int sockfd, newsockfd;
     int port;
-    int n, ext, i, len;
+    int n, ext, i, len, found;
     socklen_t client_len;
     char buffer[BUFFER+1];
     char* type;
     FILE* fd;
 
     struct sockaddr_in server_addr, client_addr;
-    if (argc < 2) error("Usage: server port\n");
+    if (argc < 2) error("Usage: sender port\n");
 
     // create socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -43,7 +43,7 @@ int main (int argc, char* argv[]) {
     listen(sockfd, 5); 
     client_len = sizeof(client_addr);
 
-    // this loop perpetually accepts the connection and processes a new HTTP request
+    // this loop perpetually accepts the connection and processes a new file request
     while (1) {
 
         newsockfd = accept(sockfd, (struct sockaddr*) &client_addr, &client_len);
@@ -63,7 +63,7 @@ int main (int argc, char* argv[]) {
 
         // open file for reading
         if (access(&buffer[5], F_OK) == -1) {
-            flag404 = 1;
+            found = 0;
             fd = fopen("404.html", "r");
         } else {
             fd = fopen(&buffer[5], "r");
