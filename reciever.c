@@ -1,5 +1,5 @@
 // Sayeed Siddiqui - CSE 3461 miniLab
-// Usage: ./client hostname port
+// Usage: ./receiver hostname port filename
 
 #include <unistd.h>
 #include <stdio.h>
@@ -22,7 +22,7 @@ int main (int argc, char *argv[]) {
     struct hostent *server;
     
     char buffer[256];
-    if (argc < 3) error("Usage: client hostname port \n");
+    if (argc < 3) error("Usage: receiver hostname port filename\n");
     
     // create socket
     port = atoi(argv[2]);
@@ -46,7 +46,7 @@ int main (int argc, char *argv[]) {
     
     while (1) {
         // prompt user for a message
-        printf("Enter message to send: ");
+        printf("Enter a file to request: ");
         bzero(buffer, 256);
         fgets(buffer, 256, stdin);
     
